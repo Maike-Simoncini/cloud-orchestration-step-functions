@@ -1,0 +1,44 @@
+{
+  "Comment": "Workflow de exemplo para o desafio DIO - Orquestração de Dados",
+  "StartAt": "ProcessarDados",
+  "States": {
+    "ProcessarDados": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:123456789012:function:MinhaFuncaoLambda",
+      "Next": "ValidarResultado",
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException"],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "ErroNoProcessamento"
+        }
+      ]
+    },
+    "ValidarResultado": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.status",
+          "StringEquals": "sucesso",
+          "Next": "FinalizadoComSucesso"
+        }
+      ],
+      "Default": "ErroNoProcessamento"
+    },
+    "FinalizadoComSucesso": {
+      "Type": "Succeed"
+    },
+    "ErroNoProcessamento": {
+      "Type": "Fail",
+      "Error": "FalhaTecnica",
+      "Cause": "Erro na execução da Lambda ou status inválido."
+    }
+  }
+}
